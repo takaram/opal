@@ -27,16 +27,9 @@ jobs:
     continue-on-error: ${{ matrix.ruby == 'head' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: yarn
-      - uses: ruby/setup-ruby@v1
+      - uses: ./.github/actions/setup
         with:
           ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true
-      - run: ruby bin/git-submodule-fast-install
-      - run: yarn install
       - run: bundle exec rake rspec
 
   rake:
