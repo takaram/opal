@@ -12,6 +12,33 @@ permissions:
   contents: read
 
 jobs:
+  rspec:
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ['3.0', '3.1', '3.2', '3.3']
+        os: [ubuntu-latest]
+        include:
+          - ruby: 3.3
+            os: windows-latest
+          - ruby: 3.3
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.ruby == 'head' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - run: ruby bin/git-submodule-fast-install
+      - run: yarn install
+      - run: bundle exec rake rspec
+
   rake:
     name: ${{ matrix.combo.name || matrix.combo.ruby }}
     env:
@@ -35,17 +62,6 @@ jobs:
           - name: minitest-strict-mode
             command: bin/rake minitest
             strict: 'true'
-          # - name: head-ruby
-          #   ruby: head
-          #   permissive: true
-          - name: current-ruby
-            ruby: '3.3'
-          - name: previous-ruby
-            ruby: '3.2'
-          - name: older-ruby
-            ruby: '3.1'
-          - name: near-eol-ruby
-            ruby: '3.0'
           - name: smoke-test
             command: bin/rake smoke_test
           - name: windows-mspec-nodejs
@@ -64,12 +80,6 @@ jobs:
           - name: windows-minitest
             command: bundle exec rake minitest
             os: windows-latest
-          - name: windows
-            command: bundle exec rake rspec
-            os: windows-latest
-          - name: macos
-            command: bundle exec rake rspec
-            os: 'macos-latest'
           - name: lint
             command: bin/rake lint
           - name: timezone
